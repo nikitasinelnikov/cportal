@@ -100,7 +100,8 @@ if ( ! class_exists( 'cp\Config' ) ) {
 		 * @since 1.0
 		 */
 		public function init_defaults() {
-			$this->defaults = array(/*'setting-key' => 'setting-value',*/);
+			// Use this structure for defaults array "setting-key => setting-value"
+			$this->defaults = array();
 
 			foreach ( $this->get( 'email_notifications' ) as $key => $notification ) {
 				$this->defaults[ $key . '_on' ]  = ! empty( $notification['default_active'] );
