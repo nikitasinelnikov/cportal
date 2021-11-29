@@ -1,0 +1,26 @@
+{
+  "name": "сportal",
+  "version": "0.1",
+  "description": "GH Actions testing environment",
+  "homepage": "https://github.com/nikitasinelnikov/cportal#readme",
+  "license": "GPL-2.0",
+  "author": {
+    "name": "Nikita Sinelnikov",
+    "email": "nsinelnikov.work@gmail.com",
+    "url": "https://github.com/nikitasinelnikov"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "gulp": "^4.0.2",
+    "gulp-clean-css": "^4.3.0",
+    "gulp-cli": "^2.3.0",
+    "gulp-rename": "^2.0.0",
+    "gulp-sass": "^4.1.0",
+    "gulp-uglify": "^3.0.2",
+    "jsdoc": "~3.6.3",
+    "wp-hookdoc": "^0.2.0"
+  },
+  "scripts": {
+    "build:docs": "rm -rf hookdocs/ && jsdoc -c hookdoc-conf.json сportal.php includes templates"
+  }
+}
