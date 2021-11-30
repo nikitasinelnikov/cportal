@@ -23,3 +23,13 @@ jobs:
         env:
           BUILD_DIR: 'docs/'
           GH_PAT: ${{ secrets.GH_PAT }}
+
+  phpdoc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: PhpDocumentor
+        uses: gpupo/actions-phpDocumentor@1.0
+        with:
+          dir: './'
+
