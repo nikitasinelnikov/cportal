@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Source: includes/admin/class-emails-list-table.php - CPortal Hook Docs</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+
+    <link type="text/css" rel="stylesheet" href="styles-cp.css">
+</head>
+
+<body>
+
+<div id="main">
+
+	
+    <h1 class="page-title">Source: includes/admin/class-emails-list-table.php</h1>
+	
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>&lt;?php namespace cp\admin;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+
+if ( ! class_exists( '\WP_List_Table' ) ) {
+	/** @noinspection PhpIncludeInspection */
+	require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
+}
+
+
+if ( ! class_exists( 'cp\admin\Emails_List_Table' ) ) {
+
+
+	/**
+	 * Class Emails_List_Table
+	 */
+	class Emails_List_Table extends \WP_List_Table {
+
+
+		/**
+		 * @var string
+		 */
+		private $no_items_message = '';
+
+
+		/**
+		 * @var array
+		 */
+		private $columns = array();
+
+
+		/**
+		 * CP_Emails_List_Table constructor.
+		 *
+		 * @param array $args
+		 */
+		public function __construct( $args = array() ) {
+			$args = wp_parse_args(
+				$args,
+				array(
+					'singular' => __( 'item', 'cportal' ),
+					'plural'   => __( 'items', 'cportal' ),
+					'ajax'     => false,
+				)
+			);
+
+			$this->no_items_message = $args['plural'] . ' ' . __( 'not found.', 'cportal' );
+
+			parent::__construct( $args );
+		}
+
+
+		/**
+		 * @param callable $name
+		 * @param array $arguments
+		 *
+		 * @return mixed
+		 */
+		public function __call( $name, $arguments ) {
+			return call_user_func_array( array( $this, $name ), $arguments );
+		}
+
+
+		/**
+		 *
+		 */
+		public function prepare_items() {
+			$screen = $this->screen;
+
+			$columns = $this->get_columns();
+
+			$this->_column_headers = array( $columns, array(), array() );
+
+			$emails = CP()->config()->get( 'email_notifications' );
+
+			uasort(
+				$emails,
+				function ( $a, $b ) {
+					if ( strtolower( $a['title'] ) === strtolower( $b['title'] ) ) {
+						return 0;
+					}
+					return ( strtolower( $a['title'] ) &lt; strtolower( $b['title'] ) ) ? -1 : 1;
+				}
+			);
+
+			$per_page = $this->get_items_per_page( str_replace( '-', '_', $screen->id . '_per_page' ), 999 );
+			$paged    = $this->get_pagenum();
+
+			$this->items = array_slice( $emails, ( $paged - 1 ) * $per_page, $per_page );
+
+			$this->set_pagination_args(
+				array(
+					'total_items' => count( $emails ),
+					'per_page'    => $per_page,
+				)
+			);
+		}
+
+
+		/**
+		 * @param object $item
+		 * @param string $column_name
+		 *
+		 * @return string
+		 */
+		protected function column_default( $item, $column_name ) {
+			if ( isset( $item[ $column_name ] ) ) {
+				return $item[ $column_name ];
+			} else {
+				/**
+				 * Filters the custom column content in the Email Notifications ListTable
+				 *
+				 * @since 1.0
+				 * @hook cp_emails_list_table_custom_column_content
+				 *
+				 * @param {string} $content     Custom column content. It's '' by default.
+				 * @param {array}  $item        Row item with columns data.
+				 * @param {string} $column_name Column name (key).
+				 *
+				 * @return {string} Custom column content.
+				 */
+				return apply_filters( 'cp_emails_list_table_custom_column_content', '', $item, $column_name );
+			}
+		}
+
+
+		/**
+		 *
+		 */
+		public function no_items() {
+			echo esc_html( $this->no_items_message );
+		}
+
+
+		/**
+		 * @param array $args
+		 *
+		 * @return $this
+		 */
+		public function set_columns( $args = array() ) {
+			$this->columns = $args;
+
+			return $this;
+		}
+
+
+		/**
+		 * @return array
+		 */
+		public function get_columns() {
+			return $this->columns;
+		}
+
+
+		/**
+		 * @param $item
+		 *
+		 * @return string
+		 */
+		protected function column_email( $item ) {
+			$active = CP()->options()->get( $item['key'] . '_on' );
+
+			return '&lt;span class="dashicons cp-notification-status ' . ( ! empty( $active ) ? 'cp-notification-is-active dashicons-yes' : 'dashicons-no-alt' ) . '">&lt;/span>&lt;a href="' . add_query_arg( array( 'email' => $item['key'] ) ) . '">&lt;strong>' . esc_html( $item['title'] ) . '&lt;/strong>&lt;/a>';
+		}
+
+
+		/**
+		 * @param $item
+		 *
+		 * @return string
+		 */
+		protected function column_recipients( $item ) {
+			if ( 'admin' === $item['recipient'] ) {
+				return CP()->options()->get( 'admin_email' );
+			} else {
+				return __( 'Member', 'cportal' );
+			}
+		}
+
+
+		/**
+		 * @param $item
+		 *
+		 * @return string
+		 */
+		protected function column_configure( $item ) {
+			return '&lt;a class="button cp-email-configure" href="' . add_query_arg( array( 'email' => $item['key'] ) ) . '">&lt;span class="dashicons dashicons-admin-generic">&lt;/span>&lt;/a>';
+		}
+	}
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+
+    <footer>
+		<a href="https://github.com/nikitasinelnikov/cportal">CPortal Plugin</a> &bull;
+		<a href="https://docs.cportal.com/">Official Docs</a>
+	</footer>
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Actions</h3><ul><li><a href="cp_admin_init_locale.html">cp_admin_init_locale</a></li></ul><h3>Filters</h3><ul><li><a href="cp_config_get.html">cp_config_get</a></li><li><a href="cp_email_templates_columns.html">cp_email_templates_columns</a></li><li><a href="cp_emails_list_table_custom_column_content.html">cp_emails_list_table_custom_column_content</a></li><li><a href="cp_get_predefined_page_id.html">cp_get_predefined_page_id</a></li><li><a href="cp_is_predefined_page.html">cp_is_predefined_page</a></li><li><a href="cp_language_file.html">cp_language_file</a></li><li><a href="cp_language_locale.html">cp_language_locale</a></li><li><a href="cp_language_textdomain.html">cp_language_textdomain</a></li><li><a href="cp_options_get_%257B$option_id%257D.html">cp_options_get_{$option_id}</a></li><li><a href="cp_options_key.html">cp_options_key</a></li><li><a href="cp_predefined_page_option_key.html">cp_predefined_page_option_key</a></li><li><a href="cp_template_data.html">cp_template_data</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
