@@ -21,6 +21,6 @@
     "wp-hookdoc": "^0.2.0"
   },
   "scripts": {
-    "build:docs": "rm -rf docs/hooks/ && jsdoc -c hookdoc-conf.json cportal.php includes templates"
+    "build:docs": "rm -rf docs/hooks/ && jsdoc -c hookdoc-conf.json"
   }
 }
